@@ -1,5 +1,6 @@
-import sys
 import random
+import sys
+
 import pygame
 
 # =============================
@@ -29,29 +30,39 @@ TEXT_COLOR = (20, 20, 20)
 
 # Unicode pieces
 UNICODE_PIECES = {
-    'wK': '\u2654', 'wQ': '\u2655', 'wR': '\u2656', 'wB': '\u2657', 'wN': '\u2658', 'wP': '\u2659',
-    'bK': '\u265A', 'bQ': '\u265B', 'bR': '\u265C', 'bB': '\u265D', 'bN': '\u265E', 'bP': '\u265F',
+    "wK": "\u2654",
+    "wQ": "\u2655",
+    "wR": "\u2656",
+    "wB": "\u2657",
+    "wN": "\u2658",
+    "wP": "\u2659",
+    "bK": "\u265a",
+    "bQ": "\u265b",
+    "bR": "\u265c",
+    "bB": "\u265d",
+    "bN": "\u265e",
+    "bP": "\u265f",
 }
 
 PIECE_VALUES = {
-    'K': 10000,
-    'Q': 900,
-    'R': 500,
-    'B': 330,
-    'N': 320,
-    'P': 100,
+    "K": 10000,
+    "Q": 900,
+    "R": 500,
+    "B": 330,
+    "N": 320,
+    "P": 100,
 }
 
 # Starting position (rank 8 at index 0)
 START_FEN = [
-    ['bR', 'bN', 'bB', 'bQ', 'bK', 'bB', 'bN', 'bR'],
-    ['bP', 'bP', 'bP', 'bP', 'bP', 'bP', 'bP', 'bP'],
+    ["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
+    ["bP", "bP", "bP", "bP", "bP", "bP", "bP", "bP"],
     [None, None, None, None, None, None, None, None],
     [None, None, None, None, None, None, None, None],
     [None, None, None, None, None, None, None, None],
     [None, None, None, None, None, None, None, None],
-    ['wP', 'wP', 'wP', 'wP', 'wP', 'wP', 'wP', 'wP'],
-    ['wR', 'wN', 'wB', 'wQ', 'wK', 'wB', 'wN', 'wR'],
+    ["wP", "wP", "wP", "wP", "wP", "wP", "wP", "wP"],
+    ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"],
 ]
 
 
@@ -70,19 +81,25 @@ def piece_type(piece):
 class Game:
     def __init__(self):
         self.board = [row[:] for row in START_FEN]
-        self.turn = 'w'  # 'w' or 'b'
+        self.turn = "w"  # 'w' or 'b'
         self.selected = None  # (r, c) or None
         self.legal_moves_from_selected = []  # list of (r,c)
         self.running = True
-        self.human_color = 'w'
-        self.ai_color = 'b'
+        self.human_color = "w"
+        self.ai_color = "b"
         self.font = None
         self.status_font = None
 
     # --------------- Rendering ---------------
     def init_fonts(self):
         # Try fonts that contain chess unicode on Windows
-        candidates = ['Segoe UI Symbol', 'DejaVu Sans', 'Arial Unicode MS', 'Noto Sans Symbols2', None]
+        candidates = [
+            "Segoe UI Symbol",
+            "DejaVu Sans",
+            "Arial Unicode MS",
+            "Noto Sans Symbols2",
+            None,
+        ]
         for name in candidates:
             try:
                 self.font = pygame.font.SysFont(name, int(SQ_SIZE * 0.75))
@@ -90,26 +107,30 @@ class Game:
                     break
             except Exception:
                 continue
-        self.status_font = pygame.font.SysFont('consolas', 20)
+        self.status_font = pygame.font.SysFont("consolas", 20)
 
     def draw(self, screen):
         # Draw board
         for r in range(BOARD_SIZE):
             for c in range(BOARD_SIZE):
                 color = LIGHT_SQ if (r + c) % 2 == 0 else DARK_SQ
-                rect = pygame.Rect(c * SQ_SIZE, MARGIN_TOP + r * SQ_SIZE, SQ_SIZE, SQ_SIZE)
+                rect = pygame.Rect(
+                    c * SQ_SIZE, MARGIN_TOP + r * SQ_SIZE, SQ_SIZE, SQ_SIZE
+                )
                 pygame.draw.rect(screen, color, rect)
 
         # Highlight selected square
         if self.selected:
             sr, sc = self.selected
-            rect = pygame.Rect(sc * SQ_SIZE, MARGIN_TOP + sr * SQ_SIZE, SQ_SIZE, SQ_SIZE)
+            rect = pygame.Rect(
+                sc * SQ_SIZE, MARGIN_TOP + sr * SQ_SIZE, SQ_SIZE, SQ_SIZE
+            )
             s = pygame.Surface((SQ_SIZE, SQ_SIZE), pygame.SRCALPHA)
             s.fill((255, 255, 0, 70))
             screen.blit(s, rect.topleft)
 
         # Highlight legal moves
-        for (mr, mc) in self.legal_moves_from_selected:
+        for mr, mc in self.legal_moves_from_selected:
             cx = mc * SQ_SIZE + SQ_SIZE // 2
             cy = mr * SQ_SIZE + SQ_SIZE // 2
             target_piece = self.board[mr][mc]
@@ -126,12 +147,17 @@ class Game:
                 if piece:
                     char = UNICODE_PIECES[piece]
                     text = self.font.render(char, True, TEXT_COLOR)
-                    tr = text.get_rect(center=(c * SQ_SIZE + SQ_SIZE // 2, MARGIN_TOP + r * SQ_SIZE + SQ_SIZE // 2))
+                    tr = text.get_rect(
+                        center=(
+                            c * SQ_SIZE + SQ_SIZE // 2,
+                            MARGIN_TOP + r * SQ_SIZE + SQ_SIZE // 2,
+                        )
+                    )
                     screen.blit(text, tr)
 
         # Draw status bar
         pygame.draw.rect(screen, (230, 230, 230), (0, 640, WIDTH, STATUS_BAR_H))
-        status = f"Turn: {'White' if self.turn=='w' else 'Black'}"
+        status = f"Turn: {'White' if self.turn == 'w' else 'Black'}"
         if self.turn == self.ai_color:
             status += " | AI thinking..."
         text = self.status_font.render(status, True, (30, 30, 30))
@@ -144,7 +170,7 @@ class Game:
             for c in range(8):
                 p = self.board[r][c]
                 if p and piece_color(p) == color:
-                    for (nr, nc) in self.generate_moves_for_piece(r, c):
+                    for nr, nc in self.generate_moves_for_piece(r, c):
                         moves.append(((r, c), (nr, nc)))
         return moves
 
@@ -154,30 +180,52 @@ class Game:
             return []
         color = piece_color(p)
         t = piece_type(p)
-        if t == 'P':
+        if t == "P":
             return self._pawn_moves(r, c, color)
-        elif t == 'N':
+        elif t == "N":
             return self._knight_moves(r, c, color)
-        elif t == 'B':
-            return self._slide_moves(r, c, color, directions=[(-1,-1), (-1,1), (1,-1), (1,1)])
-        elif t == 'R':
-            return self._slide_moves(r, c, color, directions=[(-1,0), (1,0), (0,-1), (0,1)])
-        elif t == 'Q':
-            return self._slide_moves(r, c, color, directions=[(-1,-1), (-1,1), (1,-1), (1,1), (-1,0), (1,0), (0,-1), (0,1)])
-        elif t == 'K':
+        elif t == "B":
+            return self._slide_moves(
+                r, c, color, directions=[(-1, -1), (-1, 1), (1, -1), (1, 1)]
+            )
+        elif t == "R":
+            return self._slide_moves(
+                r, c, color, directions=[(-1, 0), (1, 0), (0, -1), (0, 1)]
+            )
+        elif t == "Q":
+            return self._slide_moves(
+                r,
+                c,
+                color,
+                directions=[
+                    (-1, -1),
+                    (-1, 1),
+                    (1, -1),
+                    (1, 1),
+                    (-1, 0),
+                    (1, 0),
+                    (0, -1),
+                    (0, 1),
+                ],
+            )
+        elif t == "K":
             return self._king_moves(r, c, color)
         return []
 
     def _pawn_moves(self, r, c, color):
         moves = []
-        dir = -1 if color == 'w' else 1
-        start_row = 6 if color == 'w' else 1
+        dir = -1 if color == "w" else 1
+        start_row = 6 if color == "w" else 1
         one_step = (r + dir, c)
         if in_bounds(*one_step) and self.board[one_step[0]][one_step[1]] is None:
             moves.append(one_step)
             # double move from start
-            two_step = (r + 2*dir, c)
-            if r == start_row and in_bounds(*two_step) and self.board[two_step[0]][two_step[1]] is None:
+            two_step = (r + 2 * dir, c)
+            if (
+                r == start_row
+                and in_bounds(*two_step)
+                and self.board[two_step[0]][two_step[1]] is None
+            ):
                 moves.append(two_step)
         # diagonal captures
         for dc in (-1, 1):
@@ -190,7 +238,16 @@ class Game:
 
     def _knight_moves(self, r, c, color):
         moves = []
-        for dr, dc in [(-2,-1), (-2,1), (-1,-2), (-1,2), (1,-2), (1,2), (2,-1), (2,1)]:
+        for dr, dc in [
+            (-2, -1),
+            (-2, 1),
+            (-1, -2),
+            (-1, 2),
+            (1, -2),
+            (1, 2),
+            (2, -1),
+            (2, 1),
+        ]:
             nr, nc = r + dr, c + dc
             if not in_bounds(nr, nc):
                 continue
@@ -240,13 +297,15 @@ class Game:
         # Move piece
         self.board[fr][fc] = None
         # Pawn promotion (auto-queen)
-        if piece_type(piece) == 'P':
-            if (piece_color(piece) == 'w' and tr == 0) or (piece_color(piece) == 'b' and tr == 7):
-                piece = piece_color(piece) + 'Q'
+        if piece_type(piece) == "P":
+            if (piece_color(piece) == "w" and tr == 0) or (
+                piece_color(piece) == "b" and tr == 7
+            ):
+                piece = piece_color(piece) + "Q"
         self.board[tr][tc] = piece
 
         # Switch turn
-        self.turn = 'b' if self.turn == 'w' else 'w'
+        self.turn = "b" if self.turn == "w" else "w"
         self.selected = None
         self.legal_moves_from_selected = []
 
@@ -257,8 +316,8 @@ class Game:
         if not moves:
             return  # stalemate-like
         best_moves = []
-        best_score = -10**9
-        for (fr, to) in moves:
+        best_score = -(10**9)
+        for fr, to in moves:
             tr, tc = to
             target = self.board[tr][tc]
             score = 0
@@ -308,7 +367,7 @@ class Game:
 def main():
     pygame.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
-    pygame.display.set_caption('Chess with Simple AI (Pygame)')
+    pygame.display.set_caption("Chess with Simple AI (Pygame)")
     clock = pygame.time.Clock()
 
     game = Game()
@@ -336,5 +395,5 @@ def main():
     sys.exit()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
